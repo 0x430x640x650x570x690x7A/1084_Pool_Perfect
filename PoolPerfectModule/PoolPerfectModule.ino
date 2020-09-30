@@ -34,7 +34,7 @@ bool readCyanuricLevel = 0;
 const byte probePinPH = 6;
 const byte probePinORP = 6;
 const byte probePinTemp = 6;
-int readPH = 0;
+int readpH = 0;
 int readORP = 0;
 int readTemp = 0;
 int chlorineReading = 0;
@@ -50,7 +50,7 @@ const byte standbyTime = 5; // in min
 //current clamp init variables
 const byte pinCurrentClamp = 6;
 int readCurrentClamp = 0;
-const int currentCutOff = 5; // amps
+const byte currentCutOff = 5; // amps
 
 //function prototypes
 void initDisplay();
