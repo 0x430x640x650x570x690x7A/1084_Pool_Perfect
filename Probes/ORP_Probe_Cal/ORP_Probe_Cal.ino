@@ -29,8 +29,8 @@ void loop() {
   //take reading and add it to buffer
   for (int i = 0; i < sampleSize; ++i) {
     rawReading += analogRead(probePin);
-    Serial.print("Raw values: ");
-    Serial.println(rawReading, 2);
+    //Serial.print("Raw values: ");
+    //Serial.println(rawReading, 2);
     //sampling interval
     delay(2);
   }
