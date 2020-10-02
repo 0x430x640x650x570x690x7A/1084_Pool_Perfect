@@ -5,8 +5,6 @@
 
 */
 
-/* ***UNTESTED*** */
-
 const byte clampPin = A2;         //set arduino signal read pin
 const byte ACTectionRange = 10; //set Non-invasive AC Current Sensor tection range (5A,10A,20A)
 
@@ -37,10 +35,10 @@ void loop()
   //voltageRMS = (voltageRMS * 5.0 / 1024 ) / 2;
   
 
-  //correctedCurrentValue = vRMS * tection range
+  //correctedCurrentValue = voltageRMS * ACTectionRange;
   correctedCurrentValue = ((((rawVoltage / sampleSize) * 0.707) * 5.0 / 1024 ) / 2) * ACTectionRange;
  
   Serial.print(correctedCurrentValue);
   Serial.println(" A");
-
+  rawVoltage = 0;
 }
