@@ -14,7 +14,7 @@ float correctedReading = 0;
 //in case we cant find correct gain for calibration
 float myOffset = 0.00;
 
-int sampleSize = 200;
+int sampleSize = 20;
 
 void setup() {
   // put your setup code here, to run once:
@@ -36,7 +36,7 @@ void loop() {
   //correctedReading = (rawReading * 5.0 / 1024 / sampleSize) + 0.05;
   //correctedReading = 3.5 * correctedReading + myOffset;
   Serial.print("pH: ");
-  Serial.println(correctedReading, 2);
+  Serial.println(correctedReading, 1);
   delay(500);
   rawReading = 0;
 }
