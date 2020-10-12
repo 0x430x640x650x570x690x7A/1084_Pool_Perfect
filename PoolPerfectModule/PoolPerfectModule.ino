@@ -6,11 +6,16 @@
       Relay Module
       Current clamp
       Arduino
+
+      to do:
+      calculate chlorine
+      pump delay
 */
 //include all necessary libraries
 //#include <Wire.h>
 //#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h> // needed for I2C display
+#include "DallasTemperature.h" // for temperature sensor
 
 
 //include all pin connections and variables
@@ -30,35 +35,23 @@ const byte pumpArrayStatusPin = 29;
 const byte levelPinChlorine = 13;
 const byte levelPinMuriatic = 14;
 const byte levelPinSodaAsh = 15;
-bool readChlorineLevel = 0; // == F
-bool readMuriaticLevel = 1;
-bool readSodaAshLevel = 1;
 
-
-//probe init variables  ***need to add more variables for probes
-const byte samplingInterval = 10; //ms
+//probe init variables
 const byte probePinPH = A0;
 const byte probePinORP = A1;
 const byte probePinTemp = 6;
-const float lowBoundpH = 7.3;
-const float highBoundpH = 7.8;
-const float lowBoundChlorine = 2; //ppm
-const float highBoundChlorine = 3; //ppm
-int rawReadingPH = 0;
-//need float for floating point arithmetic
-float correctedReadingPH = 5.23;
-//in case we cant find correct gain for calibration
-float myOffsetPH = 0.00;
+const byte samplingInterval = 10; //ms
 
-int readORP = 0;
-int readTemp = 98;
-float chlorineReading = 0;
+// Probe: Temp
+//set data from sensor
+OneWire dataWireTempProbe(probePinTemp);
+//create sensor object to use function calls
+DallasTemperature tempSensor(&dataWireTempProbe);
 
 //relay init variables
 const byte relayPin0Chlorine = 31;
 const byte relayPin1Muriatic = 33;
 const byte relayPin2SodaAsh = 35;
-int pumpDelay = 1; //seconds
 const byte standbyTime = 5; // in min
 
 //current clamp init variables
@@ -80,6 +73,23 @@ void checkProbes();
 void updateDisplay();
 void runPumps();
 void doNothing();
+
+//save all sensor info in this object
+struct sensorInfo {
+  const float lowBoundPH = 7.3;
+  const float highBoundPH = 7.8;
+  const float lowBoundChlorine = 2; //ppm
+  const float highBoundChlorine = 3; //ppm
+  //need float for floating point arithmetic
+  float correctedReadingPH = 5.23;
+  //in case we cant find correct gain for calibration
+  float myOffsetPH = 0.00;
+  float correctedReadingORP = 0;
+  int myOffsetORP = -11;
+  float chlorineReading = 0;
+  int readTemp = 98;
+} sensor;
+//sensorInfo sensor;
 
 void setup() {
   Serial.begin(9600); // interact with serial monitor
@@ -141,11 +151,11 @@ void initDisplay() {
   display.setCursor(0, 10);
   // Display static text
   display.print("pH:   ");
-  display.println(correctedReadingPH);
+  display.println(sensor.correctedReadingPH);
   display.print("Cl:   ");
-  display.println(chlorineReading);
+  display.println(sensor.chlorineReading);
   display.print("Temp: ");
-  display.print(readTemp);
+  display.print(sensor.readTemp);
   display.setTextSize(1);
   display.println("F");
   display.display();
@@ -158,7 +168,15 @@ void initLevelSensor() {
 }
 
 void initProbe() {
-
+  //pH
+  pinMode(probePinPH, INPUT);
+  //ORP
+  pinMode(probePinORP, INPUT);
+  //Temp
+  //init sensor
+  tempSensor.begin();
+  //change sensor accuracy
+  tempSensor.setResolution(11);
 }
 
 void initRelay() {
@@ -175,6 +193,7 @@ void initRelay() {
   digitalWrite(relayPin2SodaAsh, HIGH);
 }
 
+//tested
 bool checkMainPump() {
   float rawVoltage = 0;
   float correctedCurrentValue = 0;
@@ -197,13 +216,18 @@ bool checkMainPump() {
   }
 }
 
+//tested
 bool checkChemicalLevels() {
+  bool readChlorineLevel = 0; // == F
+  bool readMuriaticLevel = 1;
+  bool readSodaAshLevel = 1;
+
   //read level of each level sensor
   //could do if between each read to not waste time reading all values if one is too low
   readChlorineLevel = digitalRead(levelPinChlorine);
   //readMuriaticLevel = digitalRead(levelPinMuriatic);
   //readSodaAshLevel = digitalRead(levelPinSodaAsh);
-  //readCyanuricLevel = digitalRead(levelPinCyanuric);
+
   //if any reading is low then i need to say it is low
   if (readChlorineLevel && readMuriaticLevel && readSodaAshLevel) {
     Serial.println("Chemical Level HIGH");
@@ -215,17 +239,39 @@ bool checkChemicalLevels() {
     return false;
   }
 }
-
+//UNTESTED
 void checkProbes() {
+  int rawReadingPH = 0;
+  int rawReadingORP = 0;
+  float rawReadingTemp = 0;
+
   digitalWrite(sensorArrayStatusPin, HIGH);
   Serial.println("Sensor Array ON");
+
   //raw probe values orp ph temp
   //look into ssampling all probes at same time
-
-  //delay for testing purposes
-  delay(3000);
+  for (int i = 0; i < sampleSize; ++i) {
+    //pH
+    rawReadingPH += analogRead(probePinPH);
+    //ORP
+    rawReadingORP += analogRead(probePinORP);
+    //temp
+    tempSensor.requestTemperatures();
+    //take reading using 1 wire library
+    rawReadingTemp += tempSensor.getTempCByIndex(0);
+    delay(samplingInterval);
+  }
+  //do saomething with raw readings
+  //pH
+  //scaling factor * ((raw * voltage / adc bit size / samples) + deviation) + correctionValue
+  sensor.correctedReadingPH = 3.5 * ((rawReadingPH * 5.0 / 1024 / sampleSize) + 0.05) + sensor.myOffsetPH;
+  //ORP
+  //((30 * voltage * 1k?) - 75? * avg reading * voltage * 1k? / 10 bit )) / 75?
+  sensor.correctedReadingORP = ((30 * 5.0 * 1000) - (75 * ((float)rawReadingORP / sampleSize) * 5.0 * 1000 / 1024)) / 75 - sensor.myOffsetORP;
+  //Temp
+  sensor.readTemp = rawReadingTemp / sampleSize;
   /*
-    //math
+    //math MUST FIND CHLORINE
     //i know temp i know ph and i know ORP
 
     //finding chlorine levels
@@ -270,49 +316,69 @@ void checkProbes() {
   digitalWrite(sensorArrayStatusPin, LOW);
 }
 
+//tested
 void updateDisplay() {
   Serial.println("Updating Display");
-  //for testing
-  correctedReadingPH++;
-  chlorineReading++;
-  readTemp++;
-  if (correctedReadingPH >= 14)
+  /*
+    //for testing
+    correctedReadingPH++;
+    chlorineReading++;
+    readTemp++;
+    if (correctedReadingPH >= 14)
     correctedReadingPH = 0;
-  if (chlorineReading >= 3)
+    if (chlorineReading >= 3)
     chlorineReading = 0;
-    
+  */
   display.setTextSize(2);
   display.setCursor(0, 10);
   display.clearDisplay();
   // Display static text
   display.print("pH:   ");
-  display.println(correctedReadingPH, 2);
+  display.println(sensor.correctedReadingPH, 2);
   display.print("Cl:   ");
-  display.println(chlorineReading, 2);
+  display.println(sensor.chlorineReading, 2);
   display.print("Temp: ");
-  display.print(readTemp);
+  display.print(sensor.readTemp);
   display.setTextSize(1);
   display.println("F");
   display.display();
 }
-
+//partially UNTESTED
 void runPumps() {
+  int pumpDelay = 0; //seconds
   digitalWrite(pumpArrayStatusPin, HIGH);
   Serial.println("Pump Array ON");
-  //based on my readings set correct pump delay
-  /*
-    //check chlorine then ph
-    if (chlorineReading < lowBoundChlorine) {
+
+  //based on my readings set correct pump delay*******
+  //I NEED MATH
+
+  //check pH thn chlorine
+  if (sensor.correctedReadingPH < sensor.lowBoundPH) {
+    //add soda ash
+    //calculate delay for soda ash
+    digitalWrite(relayPin2SodaAsh, LOW);
+    //wait for desired time
+    delay(pumpDelay * 1000);
+    digitalWrite(relayPin2SodaAsh, HIGH);
+  } else if (sensor.correctedReadingPH > sensor.highBoundPH) {
+    //add muraitic acid
+    //calculate pump delay for muriatic acid
+    digitalWrite(relayPin1Muriatic, LOW);
+    //wait for desired time
+    delay(pumpDelay * 1000);
+    digitalWrite(relayPin1Muriatic, HIGH);
+  } else if (sensor.chlorineReading < sensor.lowBoundChlorine) {
     //increase chlorine ppm
+    //calculate chlorine pump delay
     //turn on correct relay
     digitalWrite(relayPin0Chlorine, LOW);
     //wait for desired time
     delay(pumpDelay * 1000);
     digitalWrite(relayPin0Chlorine, HIGH);
-    } else
+  } else {
     //we cant do anything if chlorine is too high
-    }
-  */
+  }
+
 
   //for testing purposes
   digitalWrite(relayPin0Chlorine, LOW);
@@ -332,6 +398,7 @@ void runPumps() {
   digitalWrite(pumpArrayStatusPin, LOW);
 }
 
+//untested
 void doNothing() {
   //loop for one minute
   for (int i = 0; i <= standbyTime; ++i) {
