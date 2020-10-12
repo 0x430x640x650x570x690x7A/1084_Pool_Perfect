@@ -2,19 +2,18 @@
    Probe type: Gravity: Analog ORP Sensor Meter For Arduino
    Probe link: https://www.dfrobot.com/product-1071.html
    Product Wiki: https://wiki.dfrobot.com/Analog_ORP_Meter_SKU_SEN0165_
-
+   calibrated with 400mV
 */
 
-/* ***UNTESTED***** */
-
-const byte probePin = A2;
+const byte probePin = A0;
 //may need to make long if we have large sample size
 //assumption is max reading is 414 and int only has ~32k so 77 * 414 > 32k
 int rawReading = 0;
 //need float for floating point arithmetic
 float correctedReading = 0;
 //in case we cant find correct gain for calibration
-float myOffset = 0;
+//float myOffset = 0;
+int OFFSET = -11;//drift voltage -> find by holding cal button 
 
 int sampleSize = 20;
 
@@ -38,9 +37,10 @@ void loop() {
   //not sure here 30 and 75 come from maybe scaling value or something to do with sample size
   //could be something with the hardware
   //((30 * voltage * 1k?) - 75? * avg reading * voltage * 1k? / 10 bit )) / 75?
-  correctedReading = ((30 * 5.0 * 1000) - (75 * ((float)rawReading / sampleSize) * 5.0 * 1000 / 1024)) / 75; //- OFFSET;
+  correctedReading = ((30 * 5.0 * 1000) - (75 * ((float)rawReading / sampleSize) * 5.0 * 1000 / 1024)) / 75 - OFFSET;
 
   Serial.print("ORP: ");
   Serial.println(correctedReading, 2);
+  rawReading = 0;
   delay(500);
 }
