@@ -19,7 +19,7 @@ void setup() {
     Serial.begin(9600);
     while (!Serial) continue;
   }
-  Serial1.begin(9600);
+  Serial1.begin(9600); // pins 18 and 19 for mega
   //Serial1.setTimeout(50);
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
