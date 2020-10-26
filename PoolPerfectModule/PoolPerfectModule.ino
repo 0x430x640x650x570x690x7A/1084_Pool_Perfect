@@ -1,4 +1,6 @@
 /*
+INCOMPLETE DUE TO SCOPE CHANGE
+
    Incorporates all aspects of design:
       I2C display
       Noncontact level sensors
