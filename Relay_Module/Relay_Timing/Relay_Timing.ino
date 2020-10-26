@@ -9,8 +9,9 @@
 //set these pins as outputs
 //DDRC |= 0x55; // B0101 0101
 
-byte relayPin0 = 33; // pump on high ground
-byte relayPin1 = 35; //pump on low ground
+byte relayPin0 = 35; //chlorine
+byte relayPin1 = 37; //soda ash
+byte relayPin2 = 39; //muriatic acid
 
 int runningInterval = 3000; // 3sec
 
@@ -18,21 +19,25 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   //DDRC |= 0x55; // B0101 0101
-  pinMode(relayPin0, OUTPUT);
-  pinMode(relayPin1, OUTPUT);
+  pinMode(relayPin0, OUTPUT); //chlorine
+  pinMode(relayPin1, OUTPUT); //soda ash
+  pinMode(relayPin2, OUTPUT); //muriatic acid
+
 
   //PORTC &= ~0x55;
   //digitalWrite(relayPin0, LOW);
   //digitalWrite(relayPin1, LOW);
   digitalWrite(relayPin0, HIGH);
   digitalWrite(relayPin1, HIGH);
+  digitalWrite(relayPin2, HIGH);
 
 }
 
 void runPumps();
 void stopPumps();
-void runPumpHigh();
-void runPumpLow();
+void runPumpChlorine();
+void runPumpSodaAsh();
+void runPumpMuriatic();
 void runPumpsTimed();
 
 void loop() {
@@ -47,14 +52,18 @@ void loop() {
         runPumps();
         break;
       //run high ground pump
-      case 'h':
-      case 'H':
-        runPumpHigh();
+      case 'c':
+      case 'C':
+        runPumpChlorine();
         break;
       //run low ground pump
-      case 'l':
-      case 'L':
-        runPumpLow();
+      case 'a':
+      case 'A':
+        runPumpSodaAsh();
+        break;
+      case 'm':
+      case 'M':
+        runPumpMuriatic();
         break;
       //stop pumps
       case 's':
@@ -75,34 +84,43 @@ void loop() {
 void runPumps() {
   digitalWrite(relayPin0, LOW);
   digitalWrite(relayPin1, LOW);
+  digitalWrite(relayPin2, LOW);
   Serial.println("Running");
 }
 
 void stopPumps() {
   digitalWrite(relayPin0, HIGH);
   digitalWrite(relayPin1, HIGH);
+  digitalWrite(relayPin2, HIGH);
   Serial.println("Stopped");
 }
 
-void runPumpHigh() {
+void runPumpChlorine() {
   digitalWrite(relayPin0, LOW);
-  Serial.println("Running High");
+  Serial.println("Running Chlorine");
 }
 
-void runPumpLow() {
+void runPumpSodaAsh() {
   digitalWrite(relayPin1, LOW);
-  Serial.println("Running Low");
+  Serial.println("Running SodaAsh");
+}
+
+void runPumpMuriatic() {
+  digitalWrite(relayPin2, LOW);
+  Serial.println("Running Muriatic Acid");
 }
 
 void runPumpsTimed() {
   digitalWrite(relayPin0, LOW);
   digitalWrite(relayPin1, LOW);
+  digitalWrite(relayPin2, LOW);
   Serial.println("Running Timed");
   Serial.print(runningInterval);
   Serial.println(" ms");
   delay(runningInterval);
   digitalWrite(relayPin0, HIGH);
   digitalWrite(relayPin1, HIGH);
+  digitalWrite(relayPin2, HIGH);
   Serial.println("Timed");
 
 }
