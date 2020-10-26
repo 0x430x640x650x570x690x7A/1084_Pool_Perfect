@@ -19,11 +19,10 @@ void setup() {
     Serial.begin(9600);
     while (!Serial) continue;
   }
-  Serial1.begin(9600); // pins 18 and 19 for mega
+  Serial1.begin(9600);
   //Serial1.setTimeout(50);
-  pinMode(13,OUTPUT);
-  digitalWrite(13,HIGH);
   virtuino.begin(onReceived, onRequested, 256); //Start Virtuino. Set the buffer to 256. With this buffer Virtuino can control about 28 pins (1 command = 9bytes) The T(text) commands with 20 characters need 20+6 bytes
+  //virtuinoRun();
 }
 
 void loop() {
@@ -31,7 +30,7 @@ void loop() {
   bool newPHReading = false;
   bool newChlorineReading = false;
   bool newTempReading = false;
-  Serial.println("Reading values");
+  Serial.println("\nReading values");
   while (true) {
     if (V[0] != V0_lastValuePH) {           // The V0 has changed
       vDelay(500); // need a delay because sometimes multiple readings sent
@@ -61,7 +60,7 @@ void loop() {
       break;
     }
   }
-  Serial.println("Sending values");
+  Serial.println("Sending values\n");
 
   vDelay(2000);     // This is an example of the recommended delay function. Remove this if you don't need
 }
