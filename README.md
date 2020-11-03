@@ -6,4 +6,6 @@ Link for Arduino Port Pinout: https://www.arduino.cc/en/Hacking/PinMapping2560
 
 Timer info: https://arduinoinfo.mywikis.net/wiki/Timers-Arduino
 
+Demo Video: https://www.youtube.com/watch?v=xmd-V7uRV2U&feature=emb_logo
+
 If you want to make a change create a new branch and i can merge it into the master branch later
