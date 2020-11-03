@@ -8,4 +8,6 @@ Timer info: https://arduinoinfo.mywikis.net/wiki/Timers-Arduino
 
 Demo Video: https://www.youtube.com/watch?v=xmd-V7uRV2U&feature=emb_logo
 
+Evan alias:  0x430x640x650x570x690x7A 
+
 If you want to make a change create a new branch and i can merge it into the master branch later
